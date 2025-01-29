@@ -1,8 +1,11 @@
 from pymycobot.mycobot import MyCobot
 
 from pymycobot import PI_PORT, PI_BAUD
-from time import sleep
 
+from time import sleep
+from enum import Enum
+
+import RPi.GPIO as GPIO
 
 # Create object code here for Raspberry Pi version
 mc: MyCobot = MyCobot(port=PI_PORT, baudrate=str(PI_BAUD))
