@@ -1,0 +1,30 @@
+Coordinates to Several Positions:
+
+Neutral Position: 
+    coords: [57.5, -64.4, 408.6, -92.37, 0.17, -89.83]
+    angles: [0.26, -1.05, -1.14, -0.17, -0.08, 0.17]
+
+Bin A:
+    coords: [103.6, 75.2, 402.2, -88.15, 1.71, -24.46]
+    angles:  
+
+Bin B:
+    coords: [21.4, 130.1, 390.6, -84.67, 17.07, 19.83]
+    angles:  [111.18, -4.39, -37.0, 46.66, -3.25, 16.87]
+
+Bin C:
+    coords: [105.3, -110.7, 349.8, -83.04, 16.89, -112.61]
+    angles:  [-19.59, -67.14, 67.5, 3.95, -4.65, 16.17]
+
+Bin D:
+    coords: [73.1, -124.9, 393.2, -92.03, 6.24, -124.85]
+    angles:  [-32.16, -27.15, 8.43, 15.11, -2.72, 6.06]
+
+Loading Zone:
+    coords: [119.8, 33.7, 380.3, -81.99, 3.74, -43.88]
+    angles:  [47.72, -48.07, 54.31, -0.43, -2.37, 3.16]
+
+
+from pymycobot.mycobot import MyCobot
+from pymycobot import PI_PORT, PI_BAUD
+mc: MyCobot = MyCobot(port=PI_PORT, baudrate=str(PI_BAUD))
