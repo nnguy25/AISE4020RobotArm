@@ -1,21 +1,31 @@
 import cv2
 from collections import Counter
 from module import findnameoflandmark, findpostion, speak
+from pymycobot.mycobot import MyCobot
+from pymycobot import PI_PORT, PI_BAUD
+
+
+mc: MyCobot = MyCobot(port=PI_PORT, baudrate=str(PI_BAUD))
 
 def thumb_action():
     print("Thumb function called")
+    mc.set_color(0, 0, 255)
 
 def index_action():
     print("Index function called")
+    mc.set_color(0, 255, 0)
 
 def middle_action():
     print("Middle function called")
+    mc.set_color(255, 0, 0)
 
 def ring_action():
     print("Ring function called")
+    mc.set_color(100, 100, 100)
 
 def pinkie_action():
     print("Pinkie function called")
+    mc.set_color(255, 255, 255)
 
 cap = cv2.VideoCapture(0)
 tip = [8, 12, 16, 20]  # Index, Middle, Ring, Pinkie tip landmarks
