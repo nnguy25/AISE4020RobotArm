@@ -16,6 +16,7 @@ if mc.is_controller_connected() != 1:
     exit(0)
 
 
+
 # Positions
 NEUTRAL_POS_COORDS = [57.5, -64.4, 408.6, -92.37, 0.17, -89.83]
 BIN_A_COORDS = [103.6, 75.2, 402.2, -88.15, 1.71, -24.46]
@@ -60,22 +61,22 @@ def move_to_bin(bin):
 
     # Travel to designated bin
     if bin=='A':
-        mc.sync_send_coords(coords=BIN_A_COORDS,speed=SPEED)
+        mc.sync_send_coords(coords=BIN_A_COORDS,speed=SPEED, timeout=3)
     elif bin=='B':
-        mc.sync_send_coords(coords=BIN_B_COORDS,speed=SPEED)
+        mc.sync_send_coords(coords=BIN_B_COORDS,speed=SPEED, timeout=3)
     elif bin=='C':
-        mc.sync_send_coords(coords=BIN_C_COORDS,speed=SPEED)
+        mc.sync_send_coords(coords=BIN_C_COORDS,speed=SPEED, timeout=3)
     elif bin=='D':
-        mc.sync_send_coords(coords=BIN_D_COORDS,speed=SPEED)
+        mc.sync_send_coords(coords=BIN_D_COORDS,speed=SPEED, timeout=3)
     else:
-        mc.sync_send_coords(coords=LOADING_ZONE_COORDS,speed=SPEED)
+        mc.sync_send_coords(coords=LOADING_ZONE_COORDS,speed=SPEED, timeout=3)
     
 def pickup_object(letter):
     # [ move to object ]
     mc.release_all_servos()     # manually release to desired object   
     sleep(5)
     pump_on()
-    sleep(5)
+    sleep(2)
     neutral_pos()
 
 def neutral_pos():
@@ -85,10 +86,13 @@ def neutral_pos():
 
 
 
+
+
 def main():
     """
     Main function performs some action(s) for robot arm
     """
+
     # set GPIO mode
     # Broadcom SOC channel, which refers to the numbering of GPIO pins on a Raspberry Pi
     GPIO.setmode(GPIO.BCM)
@@ -97,8 +101,8 @@ def main():
     GPIO.output(20, PumpStatus.OFF.value)
 
     # Reset robot arm to neutral position
-    mc.send_coords(coords=NEUTRAL_POS_COORDS, speed=SPEED)
-
+    neutral_pos()
+    sleep(2)
 
     # [ Get input for letter (via hand gesture) and bin]
     LETTER = input("Input letter: ")
@@ -125,11 +129,11 @@ def main():
     #loop 7 times
     while i > 0:                            
         mc.set_color(0,0,255) #blue light on
-        time.sleep(2)    #wait for 2 seconds                
+        sleep(2)    #wait for 2 seconds                
         mc.set_color(255,0,0) #red light on
-        time.sleep(2)    #wait for 2 seconds
+        sleep(2)    #wait for 2 seconds
         mc.set_color(0,255,0) #green light on
-        time.sleep(2)    #wait for 2 seconds
+        sleep(2)    #wait for 2 seconds
         i -= 1
     ### end of test code
 
@@ -137,3 +141,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    try:
+        raise KeyboardInterrupt
+    finally:
+        print("Returning to neutral position.")
+        neutral_pos()
+        print("Goodbye.")
