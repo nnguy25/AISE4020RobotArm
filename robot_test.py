@@ -29,7 +29,7 @@ SPEED = 30
 
 
 """
-PUMP action
+======PUMP action======
 """
 class PumpStatus(Enum):
     """
@@ -53,8 +53,10 @@ def pump_off():
     sleep(0.05)
     GPIO.output(21, PumpStatus.OFF.value)
 
+
+
 """
-Movement
+======Movement======
 """
 def move_to_bin(bin):
 
@@ -85,7 +87,7 @@ def neutral_pos():
 
 
 """
-    Main function performs some action(s) for robot arm
+======Main function======
 """
 def main():
     
@@ -136,14 +138,19 @@ def main():
     ### end of test code
 
 
-
+"""
+======RUNS MAIN FUNCTION======
+"""
 if __name__ == "__main__":
-    main()
+    try:
+    # run main code until interrupted
+        main()
     
-    try: 
-        raise KeyboardInterrupt
-    finally:
-        print("Returning to neutral")
+    except KeyboardInterrupt:
+        # interrupt through CTRL + C
+        # will turn off pump, return to neutral position, then display output message
+        print("\nReturning to neutral")
         pump_off()
         neutral_pos()
-        print("Goodbye")
+    finally:
+        print("Goodbye!\n== END OF SCRIPT===")
