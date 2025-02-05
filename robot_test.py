@@ -1,11 +1,12 @@
 from pymycobot.mycobot import MyCobot
-
 from pymycobot import PI_PORT, PI_BAUD
 
 from time import sleep
 from enum import Enum
 
 import RPi.GPIO as GPIO
+
+import serial
 
 # Create object code here for Raspberry Pi version
 mc: MyCobot = MyCobot(port=PI_PORT, baudrate=str(PI_BAUD))
@@ -14,6 +15,10 @@ mc: MyCobot = MyCobot(port=PI_PORT, baudrate=str(PI_BAUD))
 if mc.is_controller_connected() != 1:
     print("Please connect the robot arm correctly for program writing")
     exit(0)
+
+# Replace '/dev/ttyGS0' with the correct serial device on the Pi
+ser = serial.Serial('/dev/ttyGS0', 115200, timeout=1)
+print("Raspberry Pi is ready to receive messages.")
 
 
 # Positions
@@ -104,7 +109,7 @@ def main():
 
 
     # [ Get input for letter (via hand gesture) and bin]
-    LETTER = input("Input letter: ")
+    LETTER = received #input("Input letter: ")
     BIN = input("Bin:")
 
     # [ If object seen starts with [letter], pick up ]
@@ -112,9 +117,13 @@ def main():
 
     # [ Pick up object, move to bin, drop object in bin]
     move_to_bin(BIN)
+
     sleep(1)
+    
     pump_off()
+    
     mc.release_all_servos()
+    
     sleep(2)
     
     # [ move back ]
@@ -125,26 +134,37 @@ def main():
 
 
     ### test code
-    i = 7
-    #loop 7 times
-    while i > 0:                            
-        mc.set_color(0,0,255) #blue light on
-        sleep(2)    #wait for 2 seconds                
-        mc.set_color(255,0,0) #red light on
-        sleep(2)    #wait for 2 seconds
-        mc.set_color(0,255,0) #green light on
-        sleep(2)    #wait for 2 seconds
-        i -= 1
+    # i = 7
+    # #loop 7 times
+    # while i > 0:                            
+    #     mc.set_color(0,0,255) #blue light on
+    #     sleep(2)    #wait for 2 seconds                
+    #     mc.set_color(255,0,0) #red light on
+    #     sleep(2)    #wait for 2 seconds
+    #     mc.set_color(0,255,0) #green light on
+    #     sleep(2)    #wait for 2 seconds
+    #     i -= 1
     ### end of test code
 
 
 """
-======RUNS MAIN FUNCTION======
+======EXECUTE CODE======
 """
 if __name__ == "__main__":
     try:
-    # run main code until interrupted
-        main()
+        while True:
+            received = ser.readline().decode().strip()  # Read incoming data
+            
+            if received:
+                print("Received:", received)
+                
+                ser.write(b"Message received.\n" + received.encode() + b'\n')  # Send acknowledgment
+                
+                print(type(received))
+                # run main loop
+                main()
+
+                
     
     except KeyboardInterrupt:
         # interrupt through CTRL + C
