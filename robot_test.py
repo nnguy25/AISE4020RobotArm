@@ -16,7 +16,6 @@ if mc.is_controller_connected() != 1:
     exit(0)
 
 
-
 # Positions
 NEUTRAL_POS_COORDS = [57.5, -64.4, 408.6, -92.37, 0.17, -89.83]
 BIN_A_COORDS = [103.6, 75.2, 402.2, -88.15, 1.71, -24.46]
@@ -43,7 +42,7 @@ def pump_on():
     """
     Turns on the suction pump.
     """
-    GPIO.output(20, PumpStatus.ON.value)
+    # GPIO.output(20, PumpStatus.ON.value)  # comment this for strong pump
     GPIO.output(21, PumpStatus.ON.value)
 
 def pump_off():
@@ -61,15 +60,15 @@ def move_to_bin(bin):
 
     # Travel to designated bin
     if bin=='A':
-        mc.sync_send_coords(coords=BIN_A_COORDS,speed=SPEED, timeout=3)
+        mc.sync_send_coords(coords=BIN_A_COORDS,speed=SPEED,timeout=3)
     elif bin=='B':
-        mc.sync_send_coords(coords=BIN_B_COORDS,speed=SPEED, timeout=3)
+        mc.sync_send_coords(coords=BIN_B_COORDS,speed=SPEED,timeout=3)
     elif bin=='C':
-        mc.sync_send_coords(coords=BIN_C_COORDS,speed=SPEED, timeout=3)
+        mc.sync_send_coords(coords=BIN_C_COORDS,speed=SPEED,timeout=3)
     elif bin=='D':
-        mc.sync_send_coords(coords=BIN_D_COORDS,speed=SPEED, timeout=3)
+        mc.sync_send_coords(coords=BIN_D_COORDS,speed=SPEED,timeout=3)
     else:
-        mc.sync_send_coords(coords=LOADING_ZONE_COORDS,speed=SPEED, timeout=3)
+        mc.sync_send_coords(coords=LOADING_ZONE_COORDS,speed=SPEED,timeout=3)
     
 def pickup_object(letter):
     # [ move to object ]
@@ -82,31 +81,29 @@ def pickup_object(letter):
 def neutral_pos():
     # Return to neutral position
     mc.send_coords(coords=NEUTRAL_POS_COORDS, speed=SPEED)
-    # mc.sync_send_coords(coords=NEUTRAL_POS_COORDS,speed=SPEED)
+    #mc.sync_send_coords(coords=NEUTRAL_POS_COORDS,speed=SPEED)
 
 
-
-
-
-def main():
-    """
+"""
     Main function performs some action(s) for robot arm
-    """
-
+"""
+def main():
+    
     # set GPIO mode
     # Broadcom SOC channel, which refers to the numbering of GPIO pins on a Raspberry Pi
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(channel=20, direction=GPIO.OUT)
     GPIO.setup(channel=21, direction=GPIO.OUT)
-    GPIO.output(20, PumpStatus.OFF.value)
 
     # Reset robot arm to neutral position
+    pump_off()
     neutral_pos()
     sleep(2)
 
+
     # [ Get input for letter (via hand gesture) and bin]
     LETTER = input("Input letter: ")
-    BIN = 'A'
+    BIN = input("Bin:")
 
     # [ If object seen starts with [letter], pick up ]
     pickup_object(LETTER)
@@ -115,6 +112,7 @@ def main():
     move_to_bin(BIN)
     sleep(1)
     pump_off()
+    mc.release_all_servos()
     sleep(2)
     
     # [ move back ]
@@ -141,10 +139,11 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    try:
+    
+    try: 
         raise KeyboardInterrupt
     finally:
-        print("Returning to neutral position.")
+        print("Returning to neutral")
+        pump_off()
         neutral_pos()
-        print("Goodbye.")
+        print("Goodbye")
