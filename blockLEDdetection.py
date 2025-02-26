@@ -3,8 +3,9 @@ import numpy as np
 
 def detect_blocks():
     cap = cv2.VideoCapture(2)  # Open the camera
-    largest_square = None      # Variable to store the largest square
-    largest_area = 0           # Variable to store the area of the largest square
+    
+    # Define the region of interest (ROI) in the frame
+    x, y, w, h = 100, 100, 200, 200  # Example: Rectangle (x, y, width, height)
     
     while True:
         ret, frame = cap.read()
@@ -18,41 +19,29 @@ def detect_blocks():
         
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        # Find the largest square only once
-        if largest_square is None:
-            for contour in contours:
-                epsilon = 0.02 * cv2.arcLength(contour, True)
-                approx = cv2.approxPolyDP(contour, epsilon, True)
-                
-                if len(approx) == 4:  # Check if the contour is a quadrilateral (square)
-                    area = cv2.contourArea(contour)
-                    
-                    if area > largest_area:
-                        largest_area = area
-                        largest_square = approx
+        # Define the ROI based on fixed coordinates
+        roi = hsv[y:y+h, x:x+w]  # Crop the region of interest from the frame
         
-        # If we found a square, restrict the region to that square
-        if largest_square is not None:
-            x, y, w, h = cv2.boundingRect(largest_square)
-            roi = hsv[y:y+h, x:x+w]  # ROI within the largest square
+        # Draw a red rectangle around the ROI
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)  # Red box for ROI
+        
+        # Detect blocks only within the defined region
+        for contour in contours:
+            epsilon = 0.02 * cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, epsilon, True)
             
-            # Detect blocks only within the largest square
-            for contour in contours:
-                epsilon = 0.02 * cv2.arcLength(contour, True)
-                approx = cv2.approxPolyDP(contour, epsilon, True)
+            if len(approx) >= 4:  # Assuming blocks are quadrilateral
+                rect_x, rect_y, rect_w, rect_h = cv2.boundingRect(approx)
                 
-                if len(approx) >= 4:  # Assuming blocks are quadrilateral
-                    rect_x, rect_y, rect_w, rect_h = cv2.boundingRect(approx)
+                # Check if the block is within the fixed ROI
+                if x <= rect_x <= x + w and y <= rect_y <= y + h:
+                    block_roi = roi[rect_y - y:rect_y - y + rect_h, rect_x - x:rect_x - x + rect_w]
                     
-                    # Check if the block is within the largest square
-                    if x <= rect_x <= x + w and y <= rect_y <= y + h:
-                        block_roi = roi[rect_y - y:rect_y - y + rect_h, rect_x - x:rect_x - x + rect_w]
-                        
-                        avg_color = np.mean(block_roi, axis=(0, 1))
-                        color_name = classify_color(avg_color)
-                        
-                        cv2.rectangle(frame, (rect_x, rect_y), (rect_x + rect_w, rect_y + rect_h), (0, 255, 0), 2)
-                        cv2.putText(frame, color_name, (rect_x, rect_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    avg_color = np.mean(block_roi, axis=(0, 1))
+                    color_name = classify_color(avg_color)
+                    
+                    cv2.rectangle(frame, (rect_x, rect_y), (rect_x + rect_w, rect_y + rect_h), (0, 255, 0), 2)
+                    cv2.putText(frame, color_name, (rect_x, rect_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         
         cv2.imshow('Detected Blocks', frame)
         
