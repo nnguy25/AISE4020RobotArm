@@ -31,6 +31,7 @@ while True:
     y_start = (h - cropped_h)//2
     x_end = x_start + cropped_w
     y_end = y_start + cropped_h
+    
 
     #Get new frame
     cropped_frame = frame[y_start:y_end, x_start:x_end]
@@ -50,6 +51,15 @@ while True:
                 # convert to int
                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
+                if((int((x2 + x1)/2) < int(cropped_w/2)) & (int((y2 + y1)/2) < int(cropped_h/2))):
+                    quadrant = 1 #Top Left
+                elif((int((x2 + x1)/2) > int(cropped_w/2)) & (int((y2 + y1)/2) < int(cropped_h/2))):
+                    quadrant = 2 #Top RIght
+                elif((int((x2 + x1)/2) < int(cropped_w/2)) & (int((y2 + y1)/2) > int(cropped_h/2))):
+                    quadrant = 3 #Bottom Left
+                elif((int((x2 + x1)/2) > int(cropped_w/2)) & (int((y2 + y1)/2) > int(cropped_h/2))):
+                    quadrant = 4 #Bottom Right
+
                 # get the class
                 cls = int(box.cls[0])
 
@@ -61,9 +71,10 @@ while True:
 
                 # draw the rectangle
                 cv2.rectangle(cropped_frame, (x1, y1), (x2, y2), colour, 2)
+                #cv2.rectangle(cropped_frame, (0, 0))
 
                 # put the class name and confidence on the image
-                cv2.putText(cropped_frame, f'{classes_names[int(box.cls[0])]} {box.conf[0]:.2f}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colour, 2)
+                cv2.putText(cropped_frame, f'{classes_names[int(box.cls[0])]} {box.conf[0]:.2f} {quadrant}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colour, 2)
                 
     # show the image
     resize_factor = 3
