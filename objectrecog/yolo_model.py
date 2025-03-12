@@ -5,7 +5,7 @@ from ultralytics import YOLO
 yolo = YOLO('yolov8s.pt')
 
 # Load the video capture
-videoCap = cv2.VideoCapture(0)
+videoCap = cv2.VideoCapture(1)
 
 # Function to get class colors
 def getColours(cls_num):
@@ -15,14 +15,27 @@ def getColours(cls_num):
     color = [base_colors[color_index][i] + increments[color_index][i] * (cls_num // len(base_colors)) % 256 for i in range(3)]
     return tuple(color)
 
+cropped_w = 300
+cropped_h = cropped_w
 
 while True:
     ret, frame = videoCap.read()
     if not ret:
         print("Error: Unable to read video frame")
         break
-    results = yolo.track(frame, stream=True)
+    # get current frame dims
+    h, w, _= frame.shape
 
+    #Calculate center of crop
+    x_start = (w - cropped_w)//2
+    y_start = (h - cropped_h)//2
+    x_end = x_start + cropped_w
+    y_end = y_start + cropped_h
+
+    #Get new frame
+    cropped_frame = frame[y_start:y_end, x_start:x_end]
+
+    results = yolo.track(cropped_frame, stream=True)
 
     for result in results:
         # get the classes names
@@ -47,13 +60,15 @@ while True:
                 colour = getColours(cls)
 
                 # draw the rectangle
-                cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
+                cv2.rectangle(cropped_frame, (x1, y1), (x2, y2), colour, 2)
 
                 # put the class name and confidence on the image
-                cv2.putText(frame, f'{classes_names[int(box.cls[0])]} {box.conf[0]:.2f}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colour, 2)
+                cv2.putText(cropped_frame, f'{classes_names[int(box.cls[0])]} {box.conf[0]:.2f}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, colour, 2)
                 
     # show the image
-    cv2.imshow('frame', frame)
+    resize_factor = 3
+    im = cv2.resize(cropped_frame, (cropped_w*resize_factor, cropped_h*resize_factor))
+    cv2.imshow('frame', im)
 
     # break the loop if 'q' is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
