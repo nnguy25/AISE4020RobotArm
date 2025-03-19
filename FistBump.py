@@ -1,41 +1,25 @@
 import cv2
-import torch
-from pymycobot.mycobot import MyCobot
-from pymycobot import PI_PORT, PI_BAUD
-from time import sleep
-from ultralytics import YOLO  # Ensure YOLO is installed (`pip install ultralytics`)
+import serial
+import json
+from ultralytics import YOLO
 
-# Initialize MyCobot
-mc = MyCobot(port=PI_PORT, baudrate=str(PI_BAUD))
-if mc.is_controller_connected() != 1:
-    print("Please connect the robot arm correctly for program execution")
-    exit(1)
+# Open serial connection to Raspberry Pi (adjust port as needed)
+ser = serial.Serial("COM3", 115200, timeout=1)  # Windows example, replace with actual port for Pi
 
 # Load YOLO model
-model = YOLO("yolov8n.pt")  # Change if using a custom model
+model = YOLO("yolov8n.pt")  # Adjust if using a custom model
 
-# Robot positions (adjust as needed)
-NEUTRAL_POS_COORDS = [57.5, -64.4, 408.6, -92.37, 0.17, -89.83]  # Neutral position
-LEFT_FIST_COORDS  = [142.1, 19.9, 380.7, -85.0, -12.9, -50.92]   # Left quadrant position
-RIGHT_FIST_COORDS = [130.2, -52.1, 382.4, -85.64, -8.24, -84.2]  # Right quadrant position
-MOVE_SPEED = 30  # Movement speed (0-100)
-
-# Open USB camera (Overhead View)
+# Open camera (USB overhead camera)
 cap = cv2.VideoCapture(1)  # Adjust index if needed
 if not cap.isOpened():
     print("Error: Could not open the overhead camera")
     exit(1)
 
-# Move robot to the neutral position
-print("✅ Getting into neutral position")
-mc.send_coords(NEUTRAL_POS_COORDS, MOVE_SPEED, 0)  # Move to neutral
-sleep(2)
+print("📷 Running YOLO for fist detection...")
 
-print("📷 Scanning for a fist...")
-
-detected_quadrant = None
-frame_width = int(cap.get(3))  # Camera frame width
-mid_x = frame_width // 2  # Middle of the frame (used for left/right detection)
+frame_width = int(cap.get(3))  # Get camera width
+frame_height = int(cap.get(4))  # Get camera height
+mid_x = frame_width // 2  # Middle of the frame (for left/right detection)
 
 while True:
     ret, frame = cap.read()
@@ -48,6 +32,9 @@ while True:
 
     # Process detections
     fist_detected = False
+    detected_quadrant = None
+    fist_center = None  # To store (cx, cy)
+
     for result in results:
         for box in result.boxes:
             class_id = int(box.cls[0])  # Get class ID
@@ -58,34 +45,27 @@ while True:
                 cx, cy = (x1 + x2) // 2, (y1 + y2) // 2  # Find the center of the box
                 
                 # Determine left or right quadrant
-                if cx < mid_x:
-                    detected_quadrant = "left"
-                else:
-                    detected_quadrant = "right"
-                
+                detected_quadrant = "left" if cx < mid_x else "right"
+                fist_center = (cx, cy)  # Save the fist's center coordinates
                 fist_detected = True
-                break  # We only need one detected "Person" (fist)
+                break  # Process only the first detected "Person" (fist)
 
     if fist_detected:
-        print(f"👊 Fist detected in {detected_quadrant} quadrant")
-        break  # Stop detection once we confirm a fist
+        print(f"👊 Fist detected in {detected_quadrant} quadrant at {fist_center}")
+
+        # Send detected quadrant & middle position to Raspberry Pi
+        message = json.dumps({"quadrant": detected_quadrant, "fist_center": fist_center}) + "\n"
+        ser.write(message.encode())  # Send as JSON string
+
+    # Show the camera feed
+    cv2.imshow("Fist Detection", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break  # Exit loop on 'q' key press
 
 # Release camera
 cap.release()
 cv2.destroyAllWindows()
+ser.close()
 
-# Move robot toward the detected fist position
-if detected_quadrant:
-    print("🤖 Moving to fist bump position")
-    if detected_quadrant == "left":
-        target_coords = LEFT_FIST_COORDS
-    else:
-        target_coords = RIGHT_FIST_COORDS
-    
-    mc.send_coords(target_coords, MOVE_SPEED, 0)  # Move to fist bump position
-    sleep(2)  # Ensure movement is complete
-
-    print("✅ Fist bump complete! Returning to neutral position.")
-    mc.send_coords(NEUTRAL_POS_COORDS, MOVE_SPEED, 0)  # Return to neutral
-else:
-    print("❌ No fist detected. Staying in neutral position.")
+ser.write(json.dumps([fist_center,detected_quadrant]).encode('utf-8'))
