@@ -10,8 +10,6 @@ if mc.is_controller_connected() != 1:
     print("Please connect the robot arm correctly for program writing")
     exit(0)
 
-print("Move the robot manually to trace the path...")
-
 positions = []
 NEUTRAL_POS_COORDS = [-31.7, -51.5, 410.7, -74.87, -3.65, -73.34]
 mc.send_coords(coords=NEUTRAL_POS_COORDS, speed=30)
