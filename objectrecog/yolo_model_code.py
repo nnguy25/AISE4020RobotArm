@@ -1,6 +1,10 @@
 import cv2
 from ultralytics import YOLO
 
+import serial
+import json
+
+ser = serial.Serial("COM5", 115200, timeout=1)
 
 # Function to get class colors
 def getColours(cls_num):
@@ -120,11 +124,10 @@ def yolo_model():
                 categories[key] += [item]
                 
     # returns dictionary of categories
-    return categories
+    # return categories
+    ser.write(json.dumps(categories).encode('utf-8'))
 
 
-# # run code
-# if __name__ == "__main__":
-print(yolo_model())
-
-
+# run code
+if __name__ == "__main__":
+    yolo_model()
