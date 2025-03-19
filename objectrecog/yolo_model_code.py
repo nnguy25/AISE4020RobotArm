@@ -15,7 +15,7 @@ def get_objects():
     # Load the model
     yolo = YOLO('yolov8s.pt')
     # Load the video capture
-    videoCap = cv2.VideoCapture(1)
+    videoCap = cv2.VideoCapture(0)
 
     # CONSTANTS
     CROPPED_W = 300
@@ -83,7 +83,7 @@ def get_objects():
                     #cv2.rectangle(cropped_frame, (0, 0))
 
                     # object info
-                    objects += [class_name, quadrant]
+                    objects.append([class_name, quadrant])
 
                     # put the class name and confidence on the image
                     cv2.putText(cropped_frame, f'{classes_names[int(box.cls[0])]} {box.conf[0]:.2f} {quadrant}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colour, 2)
@@ -106,7 +106,7 @@ def yolo_model():
 
     # get categories
     OBJECT_GROUPS = {'ANIMALS': ['cat', 'cow', 'sheep', 'zebra'],
-                 'FOOD': ['pizza', 'apple', 'banana', 'carrot'],
+                 'FOOD': ['orange', 'apple', 'banana', 'carrot'],
                  'VEHICLES': ['motorcycle', 'airplane', 'car', 'bicycle'],
                  'OBJECTS': ['clock', 'remote', 'scissors', 'mouse']}
     # copy all dictionary keys
@@ -125,6 +125,6 @@ def yolo_model():
 
 # # run code
 # if __name__ == "__main__":
-#     yolo_model()
+print(yolo_model())
 
 
