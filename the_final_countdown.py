@@ -37,8 +37,6 @@ BIN_C_COORDS = [75.6, -88.2, 366.5, -74.4, 7.77, -98.57]
 BIN_D_COORDS = [3.4, -65.5, 417.8, -77.34, 0.87, -108.71]
 LOADING_ZONE_COORDS = [69.7, -6.7, 379.8, -56.61, -21.41, -42.46]
 
-PR = [-56.8, -51.9, 379.2, -81.54, -1.15, -73.73]   # test
-
 # Set speed
 SPEED = 30
 
@@ -132,6 +130,8 @@ def pickup_object(quadrant, name):
     #pr_pos()
     #mc.release_all_servos()
     ready_pos()
+    fix_pos()
+    ready_pos()
     
 
 def neutral_pos():
@@ -144,9 +144,10 @@ def ready_pos():
     # Return to ready position
     mc.send_coords(coords=READY_POS_COORDS, speed=SPEED)
 
-def pr_pos():
+def fix_pos():
     # Return to pre-ready position
-    mc.send_coords(coords=PR, speed=SPEED)
+    mc.send_angle(3, 20, speed=SPEED)
+    mc.send_angle(2, -20, speed=SPEED)
 
 
 """
@@ -163,7 +164,7 @@ def main(categorized_obj):
 
 
     # Receive category
-    print("Waiting for Category choice...")
+    """print("Waiting for Category choice...")
     new_received = received
     while (new_received == received) | (new_received == ''):
             new_received = ser.readline().decode().strip()  # Read incoming data
@@ -178,11 +179,11 @@ def main(categorized_obj):
     while (new_received == received) | (new_received == ''):
             new_received = ser.readline().decode().strip()  # Read incoming data
     chosen_bin= new_received
-    print(type(chosen_bin))
+    print(type(chosen_bin))"""
     
     # test
     chosen_category = 'vehicles'.upper()
-    chosen_bin = 'A'
+    chosen_bin = 'C'
     # Print choices
     print(f'Cleaning up all objects of type "{chosen_category}" to bin "{chosen_bin}"')
     sleep(0.5)
@@ -245,8 +246,13 @@ if __name__ == "__main__":
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(channel=20, direction=GPIO.OUT)
         GPIO.setup(channel=21, direction=GPIO.OUT)
+        # Set Pump to Neutral (pump off, calibrated neutral position)
         pump_off()
         neutral_pos()
+        fix_pos()
+        neutral_pos()
+        
+        # Get input from external device
         print("Waiting for input...")
         while True:
             received = ser.readline().decode('utf-8') # Read incoming data
@@ -256,10 +262,6 @@ if __name__ == "__main__":
                 # print(type(received))
                 categories = json.loads(received)
                 #ser.write(b"Message received.\n" + received.encode() + b'\n')  # Send acknowledgment
-                
-                #print(categories)
-                #print(type(categories))
-                #print(categories[0])
                 
                 # run main loop
                 main(categories)
