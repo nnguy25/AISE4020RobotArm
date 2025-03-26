@@ -9,7 +9,7 @@ import time
 import serial
 import json
 
-ser = serial.Serial("COM5", 115200, timeout=1)
+ser = serial.Serial("COM12", 115200, timeout=1)
 
 ###Hand Control######################################################
 
@@ -207,7 +207,7 @@ def get_objects():
     # Load the model
     yolo = YOLO('yolov8s.pt')
     # Load the video capture
-    videoCap = cv2.VideoCapture(0)
+    videoCap = cv2.VideoCapture(2)
 
     # CONSTANTS
     CROPPED_W = 300
@@ -360,4 +360,7 @@ def userInput(cat):
 ###Running the code######################################################
 # run code
 if __name__ == "__main__":
-    yolo_model()
+    while True:
+
+        yolo_model()
+
