@@ -298,9 +298,9 @@ def yolo_model():
 
     # get categories
     OBJECT_GROUPS = {'ANIMALS': ['cat', 'cow', 'sheep', 'zebra'],
-                 'FOOD': ['orange', 'apple', 'banana', 'carrot'],
+                 'FOOD': ['orange', 'apple', 'banana', 'carrot', 'pizza'],
                  'VEHICLES': ['motorcycle', 'airplane', 'car', 'bicycle'],
-                 'OBJECTS': ['clock', 'remote', 'scissors', 'mouse']}
+                 'OBJECTS': ['clock', 'remote', 'scissors', 'mouse', 'keyboard', 'book']}
     # copy all dictionary keys
     categories = {key: [] for key in OBJECT_GROUPS}
     # using the keys and values from full object dictionary
