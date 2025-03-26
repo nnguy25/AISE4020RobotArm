@@ -102,6 +102,9 @@ def trigger_action(fingers_state):
 mod=handsModule.Hands()
 drawingModule = mediapipe.solutions.drawing_utils
 
+h=480
+w=640
+
 def read_from_pi():
     """ Continuously read and display messages from the Raspberry Pi """
     while True:
@@ -147,7 +150,7 @@ def findnameoflandmark(frame1):
 read_thread = threading.Thread(target=read_from_pi, daemon=True)
 read_thread.start()
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)          
 tip = [8, 12, 16, 20]  # Index, Middle, Ring, Pinkie tip landmarks
 
 with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.7, max_num_hands=1) as hands:
@@ -238,7 +241,7 @@ def get_objects():
     # Load the model
     yolo = YOLO('yolov8s.pt')
     # Load the video capture
-    videoCap = cv2.VideoCapture(2)
+    videoCap = cv2.VideoCapture(0)
 
     # CONSTANTS
     CROPPED_W = 300
