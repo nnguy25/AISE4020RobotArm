@@ -1,7 +1,6 @@
 import cv2
 from ultralytics import YOLO
 from collections import Counter
-from module import findnameoflandmark, findpostion
 import mediapipe
 import threading
 import time
@@ -100,6 +99,8 @@ def trigger_action(fingers_state):
             watching = False
 
 
+mod=handsModule.Hands()
+drawingModule = mediapipe.solutions.drawing_utils
 
 def read_from_pi():
     """ Continuously read and display messages from the Raspberry Pi """
@@ -111,6 +112,36 @@ def read_from_pi():
         except Exception as e:
             print("Error reading:", e)
             break
+
+def findpostion(frame1):
+    list=[]
+    results = mod.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+    if results.multi_hand_landmarks != None:
+       for handLandmarks in results.multi_hand_landmarks:
+           drawingModule.draw_landmarks(frame1, handLandmarks, handsModule.HAND_CONNECTIONS)
+           list=[]
+           for id, pt in enumerate (handLandmarks.landmark):
+                x = int(pt.x * w)
+                y = int(pt.y * h)
+                list.append([id,x,y])
+
+    return list            
+
+
+
+
+
+def findnameoflandmark(frame1):
+     list=[]
+     results = mod.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+     if results.multi_hand_landmarks != None:
+        for handLandmarks in results.multi_hand_landmarks:
+
+
+            for point in handsModule.HandLandmark:
+                 list.append(str(point).replace ("< ","").replace("HandLandmark.", "").replace("_"," ").replace("[]",""))
+     return list
+
 
 # Start a background thread to continuously read incoming messages
 read_thread = threading.Thread(target=read_from_pi, daemon=True)
