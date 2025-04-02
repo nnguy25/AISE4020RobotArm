@@ -6,7 +6,7 @@ import serial
 import json
 
 # Serial connection
-ser = serial.Serial("COM14", 115200, timeout=1)
+ser = serial.Serial("COM12", 115200, timeout=1)
 
 # Mediapipe setup
 handsModule = mediapipe.solutions.hands
@@ -49,7 +49,7 @@ def set_BinChoice(ch):
 def hand_input_loop(callback):
 
     # ADJUST THE CAMERA NUMBER AS NEEDED
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     # Landmarks indicies for fingertips
     tip = [8, 12, 16, 20]
@@ -139,7 +139,7 @@ def get_objects():
     yolo = YOLO('yolov8s.pt')
 
     # ADJUST THE CAMERA NUMBER AS NEEDED
-    videoCap = cv2.VideoCapture(1)
+    videoCap = cv2.VideoCapture(0)
 
     while True:
         # List to store the detected objects
