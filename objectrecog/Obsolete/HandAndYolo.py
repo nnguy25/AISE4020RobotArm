@@ -1,7 +1,6 @@
 import cv2
 from ultralytics import YOLO
 from collections import Counter
-from module import findnameoflandmark, findpostion
 import mediapipe
 import threading
 import time
@@ -9,7 +8,7 @@ import time
 import serial
 import json
 
-ser = serial.Serial("COM5", 115200, timeout=1)
+ser = serial.Serial("COM12", 115200, timeout=1)
 
 ###Hand Control######################################################
 
@@ -100,6 +99,11 @@ def trigger_action(fingers_state):
             watching = False
 
 
+mod=handsModule.Hands()
+drawingModule = mediapipe.solutions.drawing_utils
+
+h=480
+w=640
 
 def read_from_pi():
     """ Continuously read and display messages from the Raspberry Pi """
@@ -112,11 +116,41 @@ def read_from_pi():
             print("Error reading:", e)
             break
 
+def findpostion(frame1):
+    list=[]
+    results = mod.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+    if results.multi_hand_landmarks != None:
+       for handLandmarks in results.multi_hand_landmarks:
+           drawingModule.draw_landmarks(frame1, handLandmarks, handsModule.HAND_CONNECTIONS)
+           list=[]
+           for id, pt in enumerate (handLandmarks.landmark):
+                x = int(pt.x * w)
+                y = int(pt.y * h)
+                list.append([id,x,y])
+
+    return list            
+
+
+
+
+
+def findnameoflandmark(frame1):
+     list=[]
+     results = mod.process(cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB))
+     if results.multi_hand_landmarks != None:
+        for handLandmarks in results.multi_hand_landmarks:
+
+
+            for point in handsModule.HandLandmark:
+                 list.append(str(point).replace ("< ","").replace("HandLandmark.", "").replace("_"," ").replace("[]",""))
+     return list
+
+
 # Start a background thread to continuously read incoming messages
 read_thread = threading.Thread(target=read_from_pi, daemon=True)
 read_thread.start()
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)          
 tip = [8, 12, 16, 20]  # Index, Middle, Ring, Pinkie tip landmarks
 
 with handsModule.Hands(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.7, max_num_hands=1) as hands:
@@ -360,4 +394,7 @@ def userInput(cat):
 ###Running the code######################################################
 # run code
 if __name__ == "__main__":
-    yolo_model()
+    while True:
+
+        yolo_model()
+
