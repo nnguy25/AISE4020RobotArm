@@ -27,10 +27,10 @@ multi_finger_actions = {
 # Individual finger actions
 finger_actions = {
     "thumb": lambda: ser.write(b"Thumb\n"),
-    "index": lambda: ser.write(b"A\n"),
-    "middle": lambda: ser.write(b"B\n"),
-    "ring": lambda: ser.write(b"C\n"),
-    "pinkie": lambda: ser.write(b"D\n"),
+    "index": lambda: ser.write(b"Food\n"),
+    "middle": lambda: ser.write(b"Vehicles\n"),
+    "ring": lambda: ser.write(b"Animals\n"),
+    "pinkie": lambda: ser.write(b"Objects\n"),
 }
 import time
 
