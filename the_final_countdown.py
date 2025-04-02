@@ -29,19 +29,13 @@ print("Raspberry Pi is ready to receive messages.")
 """
 # Positions)
 
-NEUTRAL_POS_COORDS = [-51.8, 6.2, 412.8, -79.8, 15.1, -163.28]#[57.5, -64.4, 408.6, -92.37, 0.17, -89.83]
-READY_POS_COORDS = [-31.7, -51.5, 410.7, -74.87, -3.65, -73.34]#[-67.7, 7.1, 410.7, -79.26, 26.97, 179.05]
-BIN_A_COORDS =[52.7, 7.6, 417.8, -74.6, 25.74, 30.08]#[84.8, 34.3, 414.8, -75.34, 24.26, -14.66]
-BIN_B_COORDS = [52.7, 7.6, 417.8, -74.6, 25.74, 30.08]#[52.7, 51.6, 417.1, -80.18, 25.12, 18.27]
-BIN_C_COORDS = [19.8, -66.0, 342.5, -66.94, 0.24, -97.94]#[39.3, -88.8, 352.2, -73.65, 14.38, -110.75]
-BIN_D_COORDS = [3.4, -65.5, 417.8, -77.34, 0.87, -108.71]#[-4.0, -78.4, 421.0, -72.89, -0.95, -127.55]
-LOADING_ZONE_COORDS = [69.7, -6.7, 379.8, -56.61, -21.41, -42.46]#[84.2, -9.4, 329.7, -63.81, 22.36, -35.01]
-
-#Quadrants
-Q1 = [130.2, -52.1, 382.4, -85.64, -8.24, -84.2]# bot right
-Q2 = [142.1, 19.9, 380.7, -85.0, -12.9, -50.92]# bot left
-Q3 = [148.7, -56.4, 385.5, -80.31, -11.8, -86.59]# top right
-Q4 = [162.7, -1.5, 382.2, -81.22, -4.13, -64.02]# top left
+NEUTRAL_POS_COORDS = [-51.8, 6.2, 412.8, -79.8, 15.1, -163.28]
+READY_POS_COORDS = [-31.7, -51.5, 410.7, -74.87, -3.65, -73.34]
+BIN_A_COORDS =[78.5, 42.5, 411.1, -79.88, -0.92, -9.16]
+BIN_B_COORDS = [52.7, 7.6, 417.8, -74.6, 25.74, 30.08]
+BIN_C_COORDS = [75.6, -88.2, 366.5, -74.4, 7.77, -98.57]
+BIN_D_COORDS = [3.4, -65.5, 417.8, -77.34, 0.87, -108.71]
+LOADING_ZONE_COORDS = [69.7, -6.7, 379.8, -56.61, -21.41, -42.46]
 
 # Set speed
 SPEED = 30
@@ -102,35 +96,41 @@ def move_to_bin(bin):
         mc.set_color(255,255,255) #white light on
         mc.sync_send_coords(coords=LOADING_ZONE_COORDS,speed=SPEED,timeout=3)
         
-       
+        
+def pickup_object(quadrant, name):
+    # Choose the file to load
+    filename = f"Q{quadrant}.txt"
+
+    # Load recorded angles from the chosen file
+    try:
+        with open(filename, "r") as f:
+            positions = [eval(line.strip()) for line in f.readlines()]
+        print(f"Loaded {len(positions)} positions from {filename}")
+
+    except FileNotFoundError:
+        print(f"File {filename} not found. Make sure you recorded this quadrant.")
+        exit(1)
+
+    # Move to neutral position first
+    mc.send_coords(coords=READY_POS_COORDS, speed=30)
+    sleep(2)
+
+    # Replay the recorded motion smoothly
+    print(f"Moving to {name}...")
+    for pos in positions:
+        mc.sync_send_angles(pos, speed=SPEED)  # Faster and smoother motion
+        sleep(0.05)
+
+    print(f"Motion complete! Picking up {name}...")
     
-def pickup_object(quadrant):
-    # [ move to object ]
-    #mc.release_servo(3)
-    #mc.release_servo(4)
-    #input("Hold onto robot arm. Press any key to continue")
-    #mc.release_all_servos()     # manually release to desired object   
-    #input("Place robot mouth onto object. Press any key to continue")
-    #pump_on()
-    #sleep(2)
-    #neutral_pos()
-    
-    # Travel to quadrant
-    if quadrant==1:
-        mc.set_color(255,0,0) #red light on
-        mc.sync_send_coords(coords=Q1,speed=SPEED,timeout=3)
-    elif quadrant==2:
-        mc.set_color(255,255,0) #yellow light on
-        mc.sync_send_coords(coords=Q2,speed=SPEED,timeout=3)
-    elif quadrant==3:
-        mc.set_color(0,255,0) #green light on
-        mc.sync_send_coords(coords=Q3,speed=SPEED,timeout=3)
-    elif quadrant==4:
-        mc.set_color(0,0,255) #blue light on
-        mc.sync_send_coords(coords=Q4,speed=SPEED,timeout=3)
-    # turn pump on
+    # Turn pump on to pick up object
     pump_on()
     sleep(2)
+    print("Pickup complete!")
+    #pr_pos()
+    #mc.release_all_servos()
+    ready_pos()
+    fix_pos()
     ready_pos()
     
 
@@ -139,11 +139,15 @@ def neutral_pos():
     mc.send_coords(coords=NEUTRAL_POS_COORDS, speed=SPEED)
     #mc.sync_send_coords(coords=NEUTRAL_POS_COORDS,speed=SPEED)
  
+ 
 def ready_pos():
     # Return to ready position
     mc.send_coords(coords=READY_POS_COORDS, speed=SPEED)
 
-
+def fix_pos():
+    # Return to pre-ready position
+    mc.send_angle(3, 20, speed=SPEED)
+    mc.send_angle(2, -20, speed=SPEED)
 
 
 """
@@ -160,60 +164,61 @@ def main(categorized_obj):
 
 
     # Receive category
-    print("Waiting for Category choice...")
-    """new_received = received
+    """print("Waiting for Category choice...")
+    new_received = received
     while (new_received == received) | (new_received == ''):
             new_received = ser.readline().decode().strip()  # Read incoming data
     chosen_category = new_received.upper()
     print(type(chosen_category))
     # Waits a few seconds to prepare for next input
     print("Category received, please wait...")
-    sleep(2)
+    ser.write(b"Ready")  # Send acknowledgment
     # Receive bin
     print("Waiting for Bin choice...")
     new_received = received
     while (new_received == received) | (new_received == ''):
             new_received = ser.readline().decode().strip()  # Read incoming data
     chosen_bin= new_received
-    print(type(chosen_bin))
-    """
+    print(type(chosen_bin))"""
+    
     # test
-    chosen_category = 'Food'.upper()
-    chosen_bin = 'A'
+    chosen_category = 'vehicles'.upper()
+    chosen_bin = 'C'
     # Print choices
     print(f'Cleaning up all objects of type "{chosen_category}" to bin "{chosen_bin}"')
     sleep(0.5)
 
     
-    
-    
     # Iterate through all objects in chosen_category
     for item in categorized_obj[chosen_category]:
         
-        # get object name and quadrant
-        name = item[0]
-        quad = item[1]
+        # Get object name and quadrant
+        name = item[0] #str
+        quad = item[1] #int
         print(f"Item '{name}' in quadrant '{quad}'")
         
-        # [ If object seen starts with [letter], pick up ]
-        print("Moving item to bin")
-        pickup_object(quad)
+        # Call function to pick up object
+        pickup_object(quad, name)
 
-        
-
-
-        # Pick up object, move to bin, drop object in bin
-        print("\nMoving to Bin", chosen_bin)
+        # Call function to drop object in bin
+        print(f"\nMoving to Bin {chosen_bin}...")
         sleep(1)
         move_to_bin(chosen_bin)
         sleep(1)
-        print("Releasing block")
+        print(f"Releasing {name}...")
         pump_off()
         mc.set_color(128,128,128) #  Reset to grey color
         sleep(1) 
         
         # Return to ready pos for next item
         ready_pos()
+    
+    
+    
+    # Fist bump
+    ser.write(b"Message received.\n" + received.encode() + b'\n')  # Send acknowledgment
+    
+    
     
     # Returns to neutral pos when all items of type are exhausted
     print("Returning to base position")
@@ -241,7 +246,13 @@ if __name__ == "__main__":
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(channel=20, direction=GPIO.OUT)
         GPIO.setup(channel=21, direction=GPIO.OUT)
+        # Set Pump to Neutral (pump off, calibrated neutral position)
         pump_off()
+        neutral_pos()
+        fix_pos()
+        neutral_pos()
+        
+        # Get input from external device
         print("Waiting for input...")
         while True:
             received = ser.readline().decode('utf-8') # Read incoming data
@@ -249,14 +260,11 @@ if __name__ == "__main__":
             if received:
                 print("Received:\n", received)
                 # print(type(received))
-                categorized_obj = json.loads(received)
+                categories = json.loads(received)
                 #ser.write(b"Message received.\n" + received.encode() + b'\n')  # Send acknowledgment
                 
-                # print(categories)
-                # print(type(categories))
-                
                 # run main loop
-                main(categorized_obj )
+                main(categories)
 
                 
     
